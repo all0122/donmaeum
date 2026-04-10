@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>나의 돈 마음 들여다보기</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: #FAF8F5; color: #1a1a1a; min-height: 100vh; }
+.wrap { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* Header */
+.header { padding: 14px 20px 10px; border-bottom: 0.5px solid rgba(0,0,0,0.1); background: #fff; position: sticky; top: 0; z-index: 10; }
+.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; }
+.header-title { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+.header-sub { font-size: 11px; color: #888; margin-top: 2px; }
+.part-badge { font-size: 11px; color: #888; background: #f0ede8; padding: 3px 10px; border-radius: 20px; }
+.progress-wrap { height: 3px; background: #f0ede8; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+.progress-bar { height: 100%; background: #B87333; border-radius: 4px; transition: width 0.6s ease; }
+.part-label { padding: 8px 20px 0; font-size: 11px; font-weight: 600; color: #B87333; letter-spacing: 0.04em; }
+
+/* Messages */
+.messages { flex: 1; padding: 14px 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.msg-row { display: flex; animation: fi 0.3s ease; }
+.msg-row.bot { justify-content: flex-start; }
+.msg-row.user { justify-content: flex-end; }
+.avatar { width: 26px; height: 26px; border-radius: 50%; background: #F5EDE4; border: 0.5px solid #E2CDB8; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #B87333; margin-right: 8px; flex-shrink: 0; align-self: flex-end; margin-bottom: 2px; }
+.bubble { max-width: 78%; padding: 10px 14px; font-size: 14px; line-height: 1.75; white-space: pre-line; }
+.bubble.bot { border-radius: 14px 14px 14px 4px; background: #f0ede8; color: #1a1a1a; }
+.bubble.user { border-radius: 14px 14px 4px 14px; background: #B87333; color: #fff; }
+.typing { display: flex; align-items: center; gap: 8px; animation: fi 0.3s ease; }
+.dots { padding: 10px 14px; background: #f0ede8; border-radius: 14px 14px 14px 4px; display: flex; gap: 5px; align-items: center; }
+.dot { width: 5px; height: 5px; border-radius: 50%; background: #aaa; animation: bounce 1.2s ease infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Input */
+.input-area { padding: 12px 20px 28px; border-top: 0.5px solid rgba(0,0,0,0.1); background: #fff; animation: fi 0.25s ease; }
+.btn-list { display: flex; flex-direction: column; gap: 8px; }
+.opt-btn { padding: 11px 16px; border-radius: 10px; border: 0.5px solid rgba(0,0,0,0.15); background: #fff; color: #1a1a1a; font-size: 14px; text-align: left; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+.opt-btn:active { background: #f0ede8; }
+.free-row { display: flex; gap: 8px; }
+textarea { flex: 1; padding: 10px 14px; border-radius: 10px; border: 0.5px solid rgba(0,0,0,0.15); background: #fff; color: #1a1a1a; font-size: 14px; line-height: 1.65; resize: none; min-height: 72px; font-family: inherit; outline: none; }
+textarea:focus { border-color: #B87333; }
+.send-btn { padding: 10px 14px; border-radius: 10px; border: none; font-size: 16px; cursor: pointer; align-self: flex-end; transition: background 0.2s; }
+.send-btn.active { background: #B87333; color: #fff; }
+.send-btn.inactive { background: #f0ede8; color: #aaa; cursor: default; }
+.done-btn { width: 100%; padding: 13px; border-radius: 12px; border: none; background: #B87333; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+/* Result */
+.result-wrap { max-width: 480px; margin: 0 auto; padding-bottom: 32px; animation: fi 0.5s ease; }
+.type-badge { margin: 16px; padding: 18px 20px; border-radius: 14px; }
+.type-label { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 6px; }
+.type-name { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+.type-tag { font-size: 12px; opacity: 0.75; }
+.tabs { display: flex; margin: 0 16px 16px; border-radius: 10px; background: #f0ede8; padding: 4px; gap: 4px; }
+.tab-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+.tab-btn.active { background: #fff; color: #1a1a1a; font-weight: 600; }
+.tab-btn.inactive { background: transparent; color: #888; }
+.result-body { padding: 0 16px 24px; }
+.report-box { padding: 18px 20px; background: #f0ede8; border-radius: 12px; font-size: 14px; line-height: 1.9; color: #1a1a1a; white-space: pre-line; margin-bottom: 12px; }
+.loading-box { padding: 32px 20px; background: #f0ede8; border-radius: 12px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.loading-dots { display: flex; gap: 6px; }
+.loading-dot { width: 7px; height: 7px; border-radius: 50%; background: #B87333; animation: bounce 1.2s ease infinite; }
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+.loading-text { font-size: 13px; color: #888; }
+.reco-box { padding: 14px 16px; border-radius: 12px; font-size: 13px; line-height: 1.7; margin-bottom: 14px; white-space: pre-line; }
+.cta-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; background: #B87333; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.brief-section { padding: 14px 16px; background: #f0ede8; border-radius: 12px; margin-bottom: 10px; }
+.brief-title { font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.04em; margin-bottom: 10px; }
+.brief-row { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+.brief-label { color: #888; flex-shrink: 0; }
+.brief-val { color: #1a1a1a; text-align: right; }
+.quote-box { padding: 14px 16px; background: #f0ede8; border-radius: 12px; margin-bottom: 10px; }
+.quote-text { font-size: 13px; line-height: 1.8; color: #1a1a1a; font-style: italic; }
+
+@keyframes fi { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-4px)} }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const TYPES = {
+  A: { name:"묶인 사람", tag:"심리 장벽 높음 · 실행 의지 높음", report:"당신은 하고 싶은 마음이 있어요.\n분명히 있어요.\n\n그런데 그 마음을 꺼낼 때마다\n어디선가 브레이크가 걸려요.\n\n\"이러면 안 되는데.\"\n\"이게 맞는 건가.\"\n\"나만 이러는 건 아닐까.\"\n\n그 브레이크의 이름은\n의지 부족이 아니에요.\n\n오랫동안 들어온 말들이\n당신 안에 규칙처럼 자리 잡은 거예요.\n\n돈을 원하면 안 된다는 규칙.\n신앙인은, 엄마는 이래야 한다는 규칙.\n\n그 규칙이 진짜인지\n한 번도 제대로 검증받은 적 없이\n지금까지 온 거예요.\n\n당신에게 필요한 건\n더 강한 의지가 아니에요.\n그 규칙을 함께 들여다봐 줄 사람이에요.", brief:"신앙 기반 재정관 재정립 우선 필요. 심리적 허락이 생기면 실행력 빠름. 달란트 비유·청지기 관점 접근 권장.", reco:"오늘 당신이 꺼낸 이야기,\n이지영 대표님이 이미 읽고 계세요.\n상담에서 0부터 시작하지 않아도 돼요.", bg:"#FDF5E6", text:"#8B6914" },
+  B: { name:"얼어있는 사람", tag:"심리 장벽 높음 · 실행 준비 낮음", report:"솔직히 말할게요.\n\n지금 당신은\n시작하고 싶은지 아닌지도\n잘 모르는 상태예요.\n\n그게 무기력해서가 아니에요.\n너무 많이 버텨왔기 때문이에요.\n\n기대했다가 실망하고\n다시 기대했다가 또 실망하면\n사람은 기대하는 법 자체를 잊어요.\n\n그냥 오늘을 버티는 게\n더 안전하다는 걸\n몸이 먼저 알아버린 거예요.\n\n그런데 오늘 여기까지 오셨잖아요.\n\n그게 작은 것 같아도\n얼어있던 사람이 문을 두드린 거예요.\n\n그걸로 충분해요.", brief:"신뢰 구축 최우선. 기대-실망 반복 패턴 가능성 있음. 작은 성공 경험 설계 필요. 판단 없는 접근 중요.", reco:"오늘 여기까지 오신 것만으로\n충분해요.\n다음 한 걸음은 혼자 걷지 않아도 돼요.", bg:"#EAF3FB", text:"#2C5F8A" },
+  C: { name:"달리고 싶은 사람", tag:"심리 장벽 낮음 · 실행 의지 높음", report:"당신은 준비가 됐어요.\n\n마음도 있고\n의지도 있고\n이유도 분명해요.\n\n그런데 계속 제자리인 이유가 있어요.\n지도 없이 달리고 있어서예요.\n\n열심히 하는데 방향이 없으면\n에너지만 소진돼요.\n\n당신에게 필요한 건\n동기부여가 아니에요.\n\n지금 이 에너지를\n어디에 어떻게 쏟을지\n설계해줄 사람이에요.\n\n당신의 달리려는 힘은\n이미 충분해요.", brief:"실행 에너지 높음. 방향 설계와 구체적 로드맵 제시가 핵심. 초반부터 수치 기반 계획 권장.", reco:"당신의 에너지는 이미 충분해요.\n이제 지도만 있으면 돼요.\n이지영 대표님이 그 지도를 함께 그려드립니다.", bg:"#EBF5EB", text:"#2E7D32" },
+  D: { name:"지쳐있는 사람", tag:"심리 장벽 낮음 · 실행 준비 낮음", report:"당신은 오랫동안\n혼자 너무 많이 짊어져 왔어요.\n\n가족을 위해\n버티고 또 버텼어요.\n\n그러다 보니\n나를 위한 것과\n가족을 위한 것의 경계가\n흐릿해진 상태예요.\n\n재정도 마찬가지예요.\n관리가 안 돼서가 아니에요.\n관리할 에너지 자체가\n바닥난 거예요.\n\n지금 당신에게\n필요한 첫 번째는\n더 열심히 하는 것이 아니라\n짐을 나눠들 사람이에요.\n\n혼자 다 하지 않아도 돼요.", brief:"소진 상태 가능성 높음. 재정 문제 이전 심리적 안정 확보 필요. 번아웃 케어 병행 권장.", reco:"혼자 다 짊어지지 않아도 돼요.\n오늘 당신이 꺼낸 이야기가\n상담의 시작점이 돼요.", bg:"#FBF0EB", text:"#6D4C41" },
+};
+
+const REFLECT_PROMPTS = {
+  q1: (a) => `사용자가 '5천만원이 생기면 무엇을 하고 싶냐'에 답했어요:\n"${a}"\n\n목록을 2-3가지 흐름으로 묶어 1-2문장으로 따뜻하게 반영해주세요. 판단 없이, 60자 이내, "~네요"로 마무리, 한국어로.`,
+  q2a: (a) => `사용자가 찔렸던 것을 말했어요:\n"${a}"\n\n1문장으로 따뜻하게 반영. 40자 이내, "~군요"로 마무리, 한국어로.`,
+  q8: (a) => `사용자가 원하는 사람의 모습을 말했어요:\n"${a}"\n\n1문장으로 따뜻하게 반영. 40자 이내, "~군요"로 마무리, 한국어로.`,
+  q9: (a) => `사용자가 '5년 후 그대로라면'에 답했어요:\n"${a}"\n\n감정을 공감하며 1문장으로 반영. 40자 이내, 한국어로.`,
+  q15: (a) => `사용자가 달라질 삶을 말했어요:\n"${a}"\n\n1문장으로 따뜻하게 반영. 40자 이내, "~네요"로 마무리, 한국어로.`,
+};
+
+const SYSTEM_REFLECT = "당신은 크리스찬 재정 심리 탐구 봇입니다. 사용자 답변을 따뜻하고 비판단적으로 짧게 반영하는 역할입니다. 분석하거나 충고하지 않아요. 거울처럼 반영만 해요. 반드시 한국어로.";
+const SYSTEM_REPORT = "당신은 크리스찬 재정 심리 탐구 봇입니다. 수집된 답변으로 개인화된 결과 리포트를 작성해주세요. 규칙: 1)한국어 2)300자 내외 3)사용자 표현 1-2개 인용 4)판단없이 거울처럼 5)따뜻한 톤 6)마지막 문장은 희망적으로 7)줄바꿈 적절히";
+
+async function callAPI(system, userMsg, maxTok) {
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:maxTok, system, messages:[{role:"user",content:userMsg}] })
+    });
+    const d = await r.json();
+    return d?.content?.[0]?.text?.trim() || null;
+  } catch { return null; }
+}
+
+const STEPS = {
+  welcome: { part:0, msg:["안녕하세요.","지금부터 약 3분간\n아무도 묻지 않았던 질문을 드릴게요.","돈에 대한 당신의 진짜 마음이요.\n\n옳고 그름을 따지지 않아요.\n평가하지 않아요.\n그냥 같이 들여다볼 거예요."], type:"buttons", options:["네, 시작할게요"], next:()=>"q1" },
+  q1: { part:1, msg:["지금 당장 통장에 5천만원이 생겼어요.","검열하지 말고\n가장 먼저 떠오르는 것들을\n순서대로 적어주세요."], type:"free_reflect", reflectKey:"q1", placeholder:"아파트, 여행, 가족 선물... 떠오르는 대로 자유롭게", bridgeMsg:"잠깐 그 목록을 같이 볼게요.", next:()=>"q2" },
+  q2: { part:1, msg:["방금 적으신 것들 중에\n혹시 적으면서\n\"이래도 되나?\" 싶었던 게 있나요?"], type:"buttons", options:["네, 있었어요","아니요, 없었어요","잘 모르겠어요"], next:(a)=>a==="네, 있었어요"?"q2a":a==="아니요, 없었어요"?"q2b":"q2c" },
+  q2a: { part:1, msg:["어느 부분에서요?\n\n딱 집어 말하기 어려워도 괜찮아요.\n느낌 그대로 적어주세요."], type:"free_reflect", reflectKey:"q2a", placeholder:"느낌 그대로...", next:()=>"q3" },
+  q2b: { part:1, msg:["그렇군요.","그 목록을\n교회 성도들 앞에서 소리 내어 읽는다고\n상상해보세요.\n\n그래도 괜찮으세요?"], type:"buttons", options:["괜찮아요","좀 불편할 것 같아요","절대 못 할 것 같아요"], next:(a)=>a==="괜찮아요"?"q3":"q2a" },
+  q2c: { part:1, msg:["모르겠다는 느낌 자체가\n중요한 신호일 수 있어요.","목록을 다시 한 번 보시면서\n가장 마음에 걸리는 게 있다면\n하나만 골라주실 수 있나요?"], type:"free_reflect", reflectKey:"q2a", placeholder:"마음에 걸리는 것...", next:()=>"q3" },
+  q3: { part:1, msg:["교회에서 돈 얘기가 나올 때\n어떤 느낌이 드나요?"], type:"buttons", options:["불편해요","자연스러워요","별로 들어본 적 없어요","교회에서 돈 얘기는 금기예요"], next:(a)=>a==="불편해요"||a==="교회에서 돈 얘기는 금기예요"?"q3a_uncomfortable":a==="자연스러워요"?"q3a_natural":"q3a_noexp" },
+  q3a_uncomfortable: { part:1, msg:["어디서 그 느낌이 온 것 같아요?"], type:"buttons", options:["설교나 교회 분위기에서","부모님이나 어른들에게서","나 스스로 그렇게 느껴왔어요","잘 모르겠어요"], next:()=>"q4" },
+  q3a_natural: { part:1, msg:["그렇군요.","재정과 신앙,\n이 둘을 어떻게 연결해서 생각하세요?"], type:"buttons", options:["청지기로서 잘 관리해야 한다고 생각해요","믿음으로 맡기면 하나님이 채워주신다고 믿어요","신앙과 재정은 별개의 영역이에요","잘 모르겠어요"], next:()=>"q4" },
+  q3a_noexp: { part:1, msg:["그렇군요.","재정 문제가 생겼을 때\n어떻게 해결하려고 하셨어요?"], type:"buttons", options:["기도하거나 하나님께 맡겼어요","혼자 어떻게든 해결했어요","가족이나 주변에 도움 요청했어요","사실 해결 못 하고 그냥 버텼어요"], next:()=>"q4" },
+  q4: { part:1, msg:["돈 때문에\n마음이 움츠러들거나\n비굴해진다고 느낀 적 있나요?"], type:"buttons", options:["네, 있어요","아니요, 없어요"], next:(a)=>a==="네, 있어요"?"q4a":"q5" },
+  q4a: { part:1, msg:["어떤 상황이었나요?\n\n짧게라도 괜찮아요."], type:"free_reflect", reflectKey:"q2a", placeholder:"기억나는 상황...", next:()=>"q5" },
+  q5: { part:1, msg:["솔직하게 물어볼게요.","돈을 관리하거나 불리는 방법을\n누군가에게 제대로 배워본 적 있나요?"], type:"buttons", options:["네, 배웠어요","아니요, 없어요"], next:(a)=>a==="네, 배웠어요"?"q5a":"q5b" },
+  q5a: { part:1, msg:["어떤 방식으로 배우셨나요?"], type:"buttons", options:["책이나 유튜브로 혼자","전문가에게 직접","가족이나 주변에서 자연스럽게","교회나 신앙 공동체에서"], next:()=>"q6" },
+  q5b: { part:1, msg:["배우지 못한 이유가\n뭐였을 것 같아요?"], type:"buttons", options:["관심 자체가 없었어요","배울 기회가 없었어요","배우면 안 될 것 같았어요","어디서 배워야 할지 몰랐어요"], next:()=>"q6" },
+  q6: { part:1, msg:["지금 본인의 재정 상태를\n스스로 평가한다면요?"], type:"buttons", options:["잘 관리되고 있어요","그럭저럭이에요","솔직히 불안해요","손대기 두려운 상태예요"], next:()=>"q7" },
+  q7: { part:1, msg:["이런 생각 해보신 적 있나요?","\"하나님이 나에게\n재정을 잘 관리하길\n원하고 계신다.\""], type:"buttons", options:["생각해본 적 없었어요","원하실 것 같아요","잘 모르겠어요"], next:()=>"q7info" },
+  q7info: { part:1, msg:["성경에서 예수님은\n달란트 비유에서\n\n받은 것을 땅에 묻어둔 사람이 아니라\n잘 운용한 사람을 칭찬하셨어요.","청지기는 가난을 목표로 삼지 않아요.\n맡은 것을 잘 키우는 사람이에요.\n\n돈 공부는 욕심이 아니라\n청지기의 책임일 수 있어요."], type:"buttons", options:["계속할게요"], next:()=>"q8" },
+  q8: { part:1, msg:["당신이 재정적으로\n자유로워진다면\n어떤 사람이 되고 싶으세요?","구체적인 숫자 말고\n그 삶의 모습이나 느낌으로 말해주세요."], type:"free_reflect", reflectKey:"q8", placeholder:"예) 베풀면서 사는 사람, 가족에게 짐이 되지 않는 사람...", next:()=>"q9" },
+  q9: { part:1, msg:["마지막으로 —","지금 이 상태가\n5년 후에도 그대로라면\n\n어떨 것 같으세요?"], type:"free_reflect", reflectKey:"q9", placeholder:"솔직하게...", next:()=>"p2intro" },
+  p2intro: { part:2, msg:["수고하셨어요.","이제 조금 더 구체적인 질문이에요.\n\n숫자 말고 감각으로 답해주세요.\n부담 없이요."], type:"buttons", options:["좋아요"], next:()=>"q10" },
+  q10: { part:2, msg:["매달 수입이 지출보다\n어떤가요?"], type:"buttons", options:["꽤 남는 편이에요","조금 남아요","거의 맞아떨어져요","조금 부족해요","많이 부족해요"], next:()=>"q11" },
+  q11: { part:2, msg:["현재 빚이 있나요?\n\n대출, 카드값, 지인 차용금\n모두 포함해서요."], type:"buttons", options:["없어요","관리 가능한 수준이에요","부담스러운 수준이에요","감당하기 어려운 수준이에요"], next:()=>"q12" },
+  q12: { part:2, msg:["매달 저축이나 투자를\n하고 있나요?"], type:"buttons", options:["네, 정기적으로 해요","가끔 여유될 때만 해요","거의 못 하고 있어요","전혀 못 하고 있어요"], next:()=>"q13" },
+  q13: { part:2, msg:["혹시 지금\n가족 중에 경제적으로\n책임지고 있는 분이 있나요?"], type:"buttons", options:["네, 가족 전체를 제가 책임져요","일부는 제가 돕고 있어요","아니요, 각자 독립적이에요"], next:()=>"p3intro" },
+  p3intro: { part:3, msg:["잘 하고 계세요.","이번엔 방향에 대한 이야기예요."], type:"buttons", options:["계속할게요"], next:()=>"q14" },
+  q14: { part:3, msg:["지금 당신에게\n돈이 필요한 가장 큰 이유가\n뭔가요?"], type:"buttons", options:["당장 버티는 것 (생존)","빚을 없애는 것 (해방)","가족을 지키는 것 (보호)","하고 싶은 걸 하는 것 (자유)","누군가를 돕는 것 (베풂)"], next:()=>"q15" },
+  q15: { part:3, msg:["그게 이루어진다면\n당신의 삶이 어떻게 달라지나요?\n\n한 문장으로 말해주세요."], type:"free_reflect", reflectKey:"q15", placeholder:"그 삶의 모습...", next:()=>"q16" },
+  q16: { part:3, msg:["그 목표가\n언제까지 이루어지길 원하세요?"], type:"buttons", options:["1년 안에","3년 안에","5년 안에","언제든 이루어지면 좋겠어요","솔직히 기대를 안 하고 있어요"], next:(a)=>a==="솔직히 기대를 안 하고 있어요"?"q16r":"p4intro" },
+  q16r: { part:3, msg:["그 마음 충분히 이해해요.","실망을 반복하면\n기대하는 것 자체가\n두려워지니까요.","그런데 오늘 여기까지 오신 건\n그 마음 어딘가에\n아직 포기하지 않은 부분이\n있다는 거예요."], type:"buttons", options:["계속할게요"], next:()=>"p4intro" },
+  p4intro: { part:4, msg:["거의 다 왔어요.","마지막 파트예요."], type:"buttons", options:["좋아요"], next:()=>"q17" },
+  q17: { part:4, msg:["재정을 바꿔보려고\n지금까지 시도해본 적 있나요?","책, 유튜브, 강의, 모임 등\n뭐든요."], type:"buttons", options:["네, 여러 번 해봤어요","한두 번 해봤어요","마음만 먹었어요","시도 자체를 못 했어요"], next:(a)=>a==="네, 여러 번 해봤어요"||a==="한두 번 해봤어요"?"q17a":"q17b" },
+  q17a: { part:4, msg:["그런데 지금도 이 상태라면 —","시도가 멈춘 이유가\n뭐였을 것 같아요?"], type:"buttons", options:["방법을 몰랐어요","혼자 하기 너무 힘들었어요","의지가 중간에 꺾였어요","현실이 너무 바빠서요","잠깐 좋아졌다 다시 원래대로"], next:()=>"q18" },
+  q17b: { part:4, msg:["시작을 막는 게\n뭔가요?"], type:"buttons", options:["어디서 시작해야 할지 몰라서","나 같은 상황에서 될까 싶어서","시간이 없어서","솔직히 두려워서"], next:()=>"q18" },
+  q18: { part:4, msg:["지금 이 순간\n당신의 변화 의지는\n어느 정도인가요?"], type:"buttons", options:["강해요, 뭐든 할 수 있어요","하고 싶은데 확신이 없어요","솔직히 반반이에요","잘 모르겠어요"], next:()=>"q19" },
+  q19: { part:4, msg:["마지막 질문이에요.","만약 지금 당신 곁에\n재정을 함께 설계해줄\n믿을 수 있는 사람이 있다면\n\n시작할 수 있을 것 같나요?"], type:"buttons", options:["네, 그러면 할 수 있을 것 같아요","그래도 자신이 없어요","해보고 싶어요"], next:()=>"close" },
+  close: { part:4, msg:["오늘 꺼내기 쉽지 않은 이야기를\n끝까지 해주셨어요.","잠시 후\n당신의 재정 마음 탐구 결과를\n보내드릴게요.","이지영 대표님이\n오늘 나누신 이야기를\n미리 함께 보실 거예요.\n\n상담은 0에서 시작하지 않아요.\n오늘 여기서부터 시작해요."], type:"done", next:()=>"result" },
+};
+
+const PART_LABELS = ["","1부 · 마음 탐구","2부 · 재무 현황","3부 · 목적 탐구","4부 · 실행력 진단"];
+
+// ── State ──
+let state = { stepId:"welcome", answers:{}, messages:[], inputShown:false, isReflecting:false, showResult:false, typeKey:null, personalReport:null, reportLoading:false, resultTab:"client", freeText:"" };
+let timers = [];
+
+function calcType(a) {
+  let b=0, r=0;
+  if(a.q2==="네, 있었어요") b+=2; else if(a.q2==="잘 모르겠어요") b+=1;
+  if(a.q3==="교회에서 돈 얘기는 금기예요") b+=2; else if(a.q3==="불편해요") b+=1;
+  if(a.q3a_natural==="믿음으로 맡기면 하나님이 채워주신다고 믿어요") b+=1;
+  if(a.q3a_natural==="신앙과 재정은 별개의 영역이에요") b+=1;
+  if(a.q17==="네, 여러 번 해봤어요") r+=2; else if(a.q17==="한두 번 해봤어요") r+=1;
+  if(a.q18==="강해요, 뭐든 할 수 있어요") r+=2; else if(a.q18==="하고 싶은데 확신이 없어요"||a.q18==="해보고 싶어요") r+=1;
+  const hb=b>=2, hr=r>=2;
+  if(hb&&hr) return "A"; if(hb&&!hr) return "B"; if(!hb&&hr) return "C"; return "D";
+}
+
+// ── Render ──
+function render() {
+  const app = document.getElementById("app");
+  if(state.showResult && state.typeKey) { renderResult(app); return; }
+  const step = STEPS[state.stepId];
+  const progress = step?.part ? (step.part/4)*100 : 0;
+
+  let html = `<div class="header">
+    <div class="header-row">
+      <div><div class="header-title">나의 돈 마음 들여다보기</div><div class="header-sub">뉴리치연구소 알파맘 프로젝트</div></div>
+      ${step?.part>0?`<span class="part-badge">${step.part}/4</span>`:""}
+    </div>
+    ${step?.part>0?`<div class="progress-wrap"><div class="progress-bar" style="width:${progress}%"></div></div>`:""}
+  </div>
+  ${step?.part>0?`<div class="part-label">${PART_LABELS[step.part]}</div>`:""}
+  <div class="messages" id="msgs">`;
+
+  state.messages.forEach(m => {
+    if(m.type==="bot") html += `<div class="msg-row bot"><div class="avatar">✦</div><div class="bubble bot">${m.text}</div></div>`;
+    else html += `<div class="msg-row user"><div class="bubble user">${m.text}</div></div>`;
+  });
+
+  if((!state.inputShown && state.messages.length>0) || state.isReflecting) {
+    html += `<div class="typing"><div class="avatar">✦</div><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  }
+  html += `<div id="bottom"></div></div>`;
+
+  if(state.inputShown && step) {
+    html += `<div class="input-area">`;
+    if(step.type==="buttons") {
+      html += `<div class="btn-list">`;
+      step.options.forEach((opt,i) => { html += `<button class="opt-btn" onclick="handleButton(${i})">${opt}</button>`; });
+      html += `</div>`;
+    } else if(step.type==="free"||step.type==="free_reflect") {
+      html += `<div class="free-row">
+        <textarea id="ftxt" placeholder="${step.placeholder||''}" oninput="state.freeText=this.value;updateSendBtn()" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&state.freeText.trim()){event.preventDefault();submitFree()}">${state.freeText}</textarea>
+        <button class="send-btn ${state.freeText.trim()?'active':'inactive'}" id="sendbtn" onclick="submitFree()">→</button>
+      </div>`;
+    } else if(step.type==="done") {
+      html += `<button class="done-btn" onclick="handleButton(0)">내 결과 보기 →</button>`;
+    }
+    html += `</div>`;
+  }
+
+  app.innerHTML = html;
+  document.getElementById("bottom")?.scrollIntoView({behavior:"smooth"});
+  if(state.inputShown && (step?.type==="free"||step?.type==="free_reflect")) {
+    setTimeout(()=>document.getElementById("ftxt")?.focus(),100);
+  }
+}
+
+function renderResult(app) {
+  const td = TYPES[state.typeKey];
+  const tab = state.resultTab;
+  let html = `<div class="result-wrap">
+    <div class="type-badge" style="background:${td.bg};border:0.5px solid ${td.text}44">
+      <div class="type-label" style="color:${td.text}">당신의 유형</div>
+      <div class="type-name" style="color:${td.text}">${state.typeKey}형 · ${td.name}</div>
+      <div class="type-tag" style="color:${td.text}">${td.tag}</div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn ${tab==="client"?"active":"inactive"}" onclick="switchTab('client')">내 탐구 결과</button>
+      <button class="tab-btn ${tab==="brief"?"active":"inactive"}" onclick="switchTab('brief')">대표님 브리핑</button>
+    </div>
+    <div class="result-body">`;
+
+  if(tab==="client") {
+    if(state.reportLoading) {
+      html += `<div class="loading-box"><div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div><div class="loading-text">당신만의 결과를 작성하고 있어요...</div></div>`;
+    } else {
+      html += `<div class="report-box">${(state.personalReport||td.report).replace(/\n/g,"<br>")}</div>`;
+    }
+    html += `<div class="reco-box" style="background:${td.bg};border:0.5px solid ${td.text}44;color:${td.text}">${td.reco.replace(/\n/g,"<br>")}</div>
+    <button class="cta-btn">알파맘 프로젝트 상담 신청하기</button>`;
+  } else {
+    const a = state.answers;
+    const sections = [
+      {title:"재무 현황", rows:[["수입/지출","q10"],["부채 수준","q11"],["저축/투자","q12"],["가족 부양","q13"]]},
+      {title:"목적 & 방향", rows:[["핵심 목적","q14"],["목표 시한","q16"]]},
+      {title:"실행력", rows:[["과거 시도","q17"],["현재 의지","q18"]]},
+    ];
+    html += `<div class="brief-section" style="background:${td.bg};border:0.5px solid ${td.text}44;margin-bottom:10px"><div class="brief-title" style="color:${td.text}">유형</div><div style="font-size:15px;font-weight:600;color:${td.text}">${state.typeKey}형 · ${td.name}</div></div>`;
+    sections.forEach(s => {
+      html += `<div class="brief-section"><div class="brief-title">${s.title}</div>`;
+      s.rows.forEach(([label,key]) => { html += `<div class="brief-row"><span class="brief-label">${label}</span><span class="brief-val">${a[key]||"—"}</span></div>`; });
+      html += `</div>`;
+    });
+    html += `<div class="brief-section"><div class="brief-title">상담 참고</div><div style="font-size:13px;line-height:1.8;color:#1a1a1a">${td.brief}</div></div>`;
+    if(a.q8) html += `<div class="quote-box"><div class="brief-title">원하는 삶 (본인 표현)</div><div class="quote-text">"${a.q8}"</div></div>`;
+    if(a.q9) html += `<div class="quote-box"><div class="brief-title">5년 후 그대로라면 (본인 표현)</div><div class="quote-text">"${a.q9}"</div></div>`;
+  }
+  html += `</div></div>`;
+  app.innerHTML = html;
+}
+
+function switchTab(t) { state.resultTab=t; render(); }
+function updateSendBtn() { const b=document.getElementById("sendbtn"); if(!b) return; b.className=`send-btn ${state.freeText.trim()?"active":"inactive"}`; }
+
+function addBotMsgs(msgs, onDone) {
+  timers.forEach(clearTimeout); timers=[];
+  msgs.forEach((m,i) => {
+    const t = setTimeout(()=>{
+      state.messages.push({type:"bot",text:m});
+      if(i===msgs.length-1) { const t2=setTimeout(()=>{state.inputShown=true;render();},300); timers.push(t2); }
+      else render();
+    }, i*420);
+    timers.push(t);
+  });
+}
+
+function loadStep(id) {
+  const step = STEPS[id];
+  state.stepId=id; state.inputShown=false; state.isReflecting=false;
+  render();
+  const msgs = Array.isArray(step.msg)?step.msg:[step.msg];
+  addBotMsgs(msgs, ()=>{state.inputShown=true;render();});
+}
+
+function handleButton(idx) {
+  const step = STEPS[state.stepId];
+  const answer = step.options?step.options[idx]:"결과 보기";
+  state.answers[state.stepId]=answer;
+  state.messages.push({type:"user",text:answer});
+  state.inputShown=false; render();
+  const next = step.next(answer);
+  if(next==="result") { triggerResult(state.answers); }
+  else { setTimeout(()=>loadStep(next),500); }
+}
+
+function submitFree() {
+  const txt = state.freeText.trim();
+  if(!txt) return;
+  const step = STEPS[state.stepId];
+  state.answers[state.stepId]=txt;
+  state.messages.push({type:"user",text:txt});
+  state.freeText=""; state.inputShown=false;
+  if(step.type==="free_reflect") { doReflect(txt, step); }
+  else {
+    const next = step.next(txt);
+    if(next==="result") triggerResult(state.answers);
+    else setTimeout(()=>loadStep(next),500);
+  }
+}
+
+async function doReflect(answer, step) {
+  state.isReflecting=true; render();
+  const reflected = await callAPI(SYSTEM_REFLECT, REFLECT_PROMPTS[step.reflectKey]?.(answer)||answer, 150);
+  state.isReflecting=false;
+  const bridgeMsgs = [];
+  if(step.bridgeMsg) bridgeMsgs.push(step.bridgeMsg);
+  if(reflected) bridgeMsgs.push(reflected);
+  if(bridgeMsgs.length>0) {
+    bridgeMsgs.forEach((m,i)=>{
+      const t=setTimeout(()=>{
+        state.messages.push({type:"bot",text:m}); render();
+        if(i===bridgeMsgs.length-1) {
+          const t2=setTimeout(()=>{
+            const next=step.next(answer);
+            if(next==="result") triggerResult(state.answers);
+            else loadStep(next);
+          },400);
+          timers.push(t2);
+        }
+      },i*420);
+      timers.push(t);
+    });
+  } else {
+    const next=step.next(answer);
+    if(next==="result") triggerResult(state.answers);
+    else loadStep(next);
+  }
+}
+
+function triggerResult(answers) {
+  const tk = calcType(answers);
+  state.typeKey=tk; state.reportLoading=true;
+  setTimeout(()=>{state.showResult=true;render();},700);
+  const td=TYPES[tk];
+  const summary=`유형: ${tk}형 (${td.name}) — ${td.tag}\n수집된 답변:\n- 5천만원: ${answers.q1||"미응답"}\n- 찔렸던 것: ${answers.q2a||"없음"}\n- 교회 돈 얘기: ${answers.q3||"미응답"}\n- 움츠러든 경험: ${answers.q4a||answers.q4||"미응답"}\n- 원하는 사람: ${answers.q8||"미응답"}\n- 5년 후: ${answers.q9||"미응답"}\n- 핵심 목적: ${answers.q14||"미응답"}\n- 달라지는 삶: ${answers.q15||"미응답"}\n- 목표 시한: ${answers.q16||"미응답"}\n- 재정 상태: ${answers.q10||"미응답"}\n- 부채: ${answers.q11||"미응답"}\n- 변화 의지: ${answers.q18||"미응답"}`;
+  callAPI(SYSTEM_REPORT, summary, 600).then(report=>{
+    state.personalReport=report; state.reportLoading=false; render();
+  });
+}
+
+// ── Init ──
+loadStep("welcome");
+</script>
+</body>
+</html>
